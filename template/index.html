@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([37.812, -122.255], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        function success(pos) {
+            var crd = pos.coords;
+            var userLocation = [crd.latitude, crd.longitude];
+            map.setView(userLocation, 13);
+
+            L.marker(userLocation).addTo(map).bindPopup('You are here!').openPopup();
+
+            // Set destination (example coordinates)
+            var destination = [37.8199, -122.4783]; // Example destination
+
+            fetch('/route', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ start: userLocation, end: destination })
+            })
+            .then(response => response.json())
+            .then(data => {
+                L.polyline(data, { color: 'blue' }).addTo(map);
+
+                L.marker(destination).addTo(map).bindPopup('Destination').openPopup();
+            });
+        }
+
+        function error(err) {
+            console.warn(`ERROR(${err.code}): ${err.message}`);
+        }
+
+        navigator.geolocation.getCurrentPosition(success, error);
+    </script>
+</body>
+</html>
